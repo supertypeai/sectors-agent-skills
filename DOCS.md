@@ -317,32 +317,22 @@ When a user wants to use this skill, follow these steps:
 
 ```
 sectors-agent-skills/
-├── .claude-plugin/           # Marketplace manifest
-│   └── marketplace.json      # Plugin catalog
-├── plugins/                  # Plugin packages
-│   └── sectors-api/          # The sectors-api plugin
-│       ├── .claude-plugin/
-│       │   └── plugin.json   # Plugin manifest (version, metadata)
-│       ├── skills/
-│       │   └── sectors-api/
-│       │       ├── SKILL.md          # Plugin skill definition
-│       │       ├── assets/
-│       │       │   └── endpoint-map.md
-│       │       └── references/
-│       │           ├── idx-endpoints.md
-│       │           └── sgx-endpoints.md
-│       └── scripts/
-│           └── check_setup.py
-├── SKILL.md              # Standalone skill definition (backward compat)
-├── DOCS.md               # This file
-├── README.md             # User documentation
+├── .claude-plugin/           # Plugin marketplace and manifest
+│   ├── marketplace.json      # Plugin catalog for this marketplace
+│   └── plugin.json           # Plugin manifest (version, metadata)
+├── skills/
+│   └── sectors-api/
+│       └── SKILL.md          # Plugin skill definition
+├── SKILL.md                  # Standalone skill definition (backward compat)
 ├── assets/
-│   └── endpoint-map.md   # Quick reference table
+│   └── endpoint-map.md       # Quick reference table
 ├── references/
-│   ├── idx-endpoints.md  # Detailed IDX docs (19 endpoints)
-│   └── sgx-endpoints.md  # Detailed SGX docs (6 endpoints)
-└── scripts/
-    └── check_setup.py    # Setup verification
+│   ├── idx-endpoints.md      # Detailed IDX docs (19 endpoints)
+│   └── sgx-endpoints.md      # Detailed SGX docs (6 endpoints)
+├── scripts/
+│   └── check_setup.py        # Setup verification
+├── DOCS.md                   # This file
+└── README.md                 # User documentation
 ```
 
 ### Key Sections in SKILL.md

@@ -125,9 +125,9 @@ Pick the right endpoint based on what the user needs:
 | SGX top companies | `GET /sgx/companies/top/` | none (all optional) |
 
 For full parameter lists and response schemas, see:
-- [references/idx-endpoints.md](references/idx-endpoints.md) -- all 18 IDX endpoints
-- [references/sgx-endpoints.md](references/sgx-endpoints.md) -- all 6 SGX endpoints
-- [assets/endpoint-map.md](assets/endpoint-map.md) -- quick-lookup table
+- `${CLAUDE_PLUGIN_ROOT}/references/idx-endpoints.md` -- all 18 IDX endpoints
+- `${CLAUDE_PLUGIN_ROOT}/references/sgx-endpoints.md` -- all 6 SGX endpoints
+- `${CLAUDE_PLUGIN_ROOT}/assets/endpoint-map.md` -- quick-lookup table
 
 ## Common patterns
 

@@ -124,22 +124,12 @@ See [assets/endpoint-map.md](assets/endpoint-map.md) for a complete list of avai
 
 ```
 .
-├── .claude-plugin/          # Marketplace manifest
-│   └── marketplace.json     # Plugin catalog for this marketplace
-├── plugins/                 # Plugin packages
-│   └── sectors-api/         # The sectors-api plugin
-│       ├── .claude-plugin/
-│       │   └── plugin.json  # Plugin manifest (version, metadata)
-│       ├── skills/
-│       │   └── sectors-api/
-│       │       ├── SKILL.md         # Plugin skill definition
-│       │       ├── assets/
-│       │       │   └── endpoint-map.md
-│       │       └── references/
-│       │           ├── idx-endpoints.md
-│       │           └── sgx-endpoints.md
-│       └── scripts/
-│           └── check_setup.py
+├── .claude-plugin/          # Plugin marketplace and manifest
+│   ├── marketplace.json     # Plugin catalog for this marketplace
+│   └── plugin.json          # Plugin manifest (version, metadata)
+├── skills/
+│   └── sectors-api/
+│       └── SKILL.md         # Plugin skill definition
 ├── SKILL.md                 # Standalone skill definition (backward compat)
 ├── assets/                  # Quick reference guides
 │   └── endpoint-map.md      # All endpoints at a glance

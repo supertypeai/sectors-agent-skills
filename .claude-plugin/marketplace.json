@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "sectors-api",
-      "source": "./plugins/sectors-api",
+      "source": ".",
       "description": "Query financial market data from the Sectors API (api.sectors.app) for IDX and SGX markets. Covers stock prices, company reports, financials, market indices, top movers, dividends, earnings, and more.",
       "category": "finance",
       "tags": ["finance", "stocks", "idx", "sgx", "indonesia", "singapore", "api"]
