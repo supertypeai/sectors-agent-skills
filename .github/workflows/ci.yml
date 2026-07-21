@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  schema-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Fetch tags and history so git diff against HEAD works
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Sync schema and regenerate
+        run: src/sync.sh
+
+      - name: Check for drift
+        run: |
+          if ! git diff --exit-code; then
+            echo "::error::Schema or generated files are stale — run ./sync.sh and commit the diff."
+            exit 1
+          fi

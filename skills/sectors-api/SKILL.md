@@ -2,237 +2,143 @@
 name: sectors-api
 description: >
   Query financial market data from the Sectors API (api.sectors.app) for IDX
-  (Indonesia Stock Exchange) and SGX (Singapore Exchange) markets. Use when the
-  user asks about stock prices, company reports, financials, market indices, top
-  movers, dividends, earnings, market cap, or any Indonesian or Singaporean
-  equity market data. Only calls https://api.sectors.app. Python with requests.
+  (Indonesia), SGX (Singapore), KLSE (Malaysia) equities, and Indonesian
+  mining sector data. Use when the user asks about stock prices, company
+  reports, financials, market indices, top movers, dividends, earnings,
+  market cap, broker activity, filings, news, or mining companies/licenses/
+  production. Only calls https://api.sectors.app. Python with requests.
+license: MIT
+compatibility: >
+  Requires Python 3.8+ with the requests library. Requires the SECTORS_API_KEY
+  environment variable to be set. Requires network access to https://api.sectors.app.
+metadata:
+  author: supertype
+  version: "2.1"
 allowed-tools: Bash(python:*) Bash(pip:*) Read
 ---
 
 # Sectors API
 
-Query IDX and SGX financial market data through the Sectors REST API.
-
-**Full API docs**: https://sectors.app/api
+Query IDX, SGX, KLSE, and mining-sector financial data through the Sectors
+REST API (`/v2`). Full docs: https://sectors.app/api
 
 ## Constraints
 
-- ONLY make HTTP requests to `https://api.sectors.app/v1`. Never call any other domain, database, or external service.
-- All endpoints are `GET` requests returning JSON.
-- Never hardcode or guess an API key. Always read it from the `SECTORS_API_KEY` environment variable.
-- If `SECTORS_API_KEY` is not set, prompt the user to set it: `export SECTORS_API_KEY="your-api-key-here"` or run the setup check script at `${CLAUDE_PLUGIN_ROOT}/scripts/check_setup.py`.
+- ONLY call `https://api.sectors.app/v2`. Never any other domain.
+- All endpoints are `GET`, returning JSON.
+- Never hardcode or guess an API key — always read `SECTORS_API_KEY` from the environment. If unset, tell the user to `export SECTORS_API_KEY="your-api-key-here"` (get one at https://sectors.app/api).
 
 ## Setup
 
-### 1. Set the API key
-
-The API key must be available as the `SECTORS_API_KEY` environment variable.
-
-```bash
-# Option A: Set in your current shell
-export SECTORS_API_KEY="your-api-key-here"
-
-# Option B: Add to your shell profile (~/.bashrc, ~/.zshrc) for persistence
-echo 'export SECTORS_API_KEY="your-api-key-here"' >> ~/.bashrc
-
-# Option C: Use a .env file in the project root (see .env.example)
-```
-
-For agent-specific configuration:
-- **Claude Code**: `claude config set env SECTORS_API_KEY your-api-key-here`
-- **OpenCode**: Set in `~/.config/opencode/config.json` under `env`
-- **Cursor**: Settings > Features > Environment Variables
-
-### 2. Install the dependency
-
 ```bash
 pip install requests
+python scripts/check_setup.py   # optional: verifies key + connectivity
 ```
 
-### 3. Verify setup (optional)
+## Request pattern
 
-```bash
-python ${CLAUDE_PLUGIN_ROOT}/scripts/check_setup.py
-```
-
-### Making requests
+Every call has this exact shape — only the path and `params` change per endpoint:
 
 ```python
 import os
 import requests
 
 API_KEY = os.environ["SECTORS_API_KEY"]
-BASE_URL = "https://api.sectors.app/v1"
+BASE_URL = "https://api.sectors.app/v2"
+headers = {"Authorization": API_KEY}  # raw key — NOT "Bearer <key>"
 
-headers = {"Authorization": API_KEY}
-response = requests.get(f"{BASE_URL}/subsectors/", headers=headers)
-data = response.json()
+resp = requests.get(f"{BASE_URL}/company/report/BBCA/", headers=headers, params={"sections": "overview,valuation"})
+if resp.status_code == 403:
+    raise ValueError("Invalid or missing API key. Ensure SECTORS_API_KEY is set correctly.")
+if not resp.ok:
+    raise RuntimeError(f"API error {resp.status_code}: {resp.text}")
+data = resp.json()
 ```
-
-The `Authorization` header takes the raw API key. Do NOT prefix it with `Bearer`.
 
 ## Endpoint decision table
 
-Pick the right endpoint based on what the user needs:
+Pick the endpoint **key** for what the user needs, then resolve exact params via
+"Getting exact parameters" below. The table is auto-generated from the schema;
+the "User wants" column is maintained in `scripts/data/intent_map.json`.
 
-### Market structure
+<!-- GENERATED:decision-table:start -->
+| Market | User wants | Endpoint key | Required params |
+|---|---|---|---|
+| IDX | Filter/screen companies (SQL-like / natural language) | `Companies Screener` | none |
+| IDX | Free float by sector/subsector/industry | `Free Float Market Analysis` | none |
+| IDX | Companies with segment data | `Companies with Revenue Segments` | none |
+| IDX | List all industries | `Industries` | none |
+| IDX | News/filing tags | `News Tags` | none |
+| IDX | Quarterly financial report dates | `Quarterly Financial Dates` | `symbol` |
+| IDX | List all subindustries | `Subindustries` | none |
+| IDX | List all subsectors | `Subsectors` | none |
+| IDX | Quarterly financials | `Company Quarterly Financials` | `symbol` |
+| IDX | Full company report | `Company Report` | `symbol` |
+| IDX | Revenue/cost segments | `Company Revenue Segments` | `symbol` |
+| IDX | Corporate actions (splits, dividends, AGM, etc.) | `Corporate Actions` | `symbol` |
+| IDX | Shareholders composition | `Shareholders Composition` | `symbol` |
+| IDX | Subsector report | `Subsector Report` | `sub_sector` |
+| IDX | Daily price/volume/market cap | `Daily Transaction Data` | `symbol` |
+| IDX | IDX total market cap | `IDX Market Summary` | none |
+| IDX | Index daily price history | `Index Daily Transaction Data` | `index_code` |
+| IDX | Most traded stocks | `Most Traded Stocks` | none |
+| IDX | Top gainers/losers | `Top Company Movers` | none |
+| IDX | Listing/IPO performance | `Company IPO & Listing Performance` | `symbol` |
+| IDX | Insider filings | `Company Filings` | none |
+| IDX | News articles (IDX or mining) | `News Articles` | none |
+| IDX | Stock suspensions | `Stock Suspensions` | none |
+| IDX | Per-broker daily activity | `Broker Activity By Code` | `broker_code` |
+| IDX | Per-symbol broker activity | `Broker Activity Per Symbol` | `symbol` |
+| IDX | Broker registry | `Broker Registry` | none |
+| IDX | Daily net foreign inflow | `Daily Net Foreign Inflow` | `symbol` |
+| IDX | Per-broker top accumulations/distributions | `Top Accumulations and Distributions Per Broker` | `broker_code` |
+| IDX | Top brokers daily ranking | `Top Brokers Daily Ranking` | none |
+| IDX | Per-symbol top buyers/sellers | `Top Buyers and Sellers Per Symbol` | `symbol` |
+| SGX | Filter/screen SGX companies | `SGX Companies Screener` | none |
+| SGX | List SGX sectors | `List all SGX sectors` | none |
+| SGX | SGX news tags | `SGX News Tags` | none |
+| SGX |  | `SGX Subsectors` | none |
+| SGX | Full SGX company report | `Full company report for an SGX-listed symbol` | `symbol` |
+| SGX | SGX daily price/volume | `SGX Daily Price Data` | `symbol` |
+| SGX | SGX share buybacks | `SGX Share Buybacks` | none |
+| SGX | SGX short-sell activity | `SGX Short Sell` | none |
+| SGX | Top SGX companies by classification | `Top SGX companies by classification` | none |
+| SGX | SGX insider filings | `SGX Insider Filings` | none |
+| SGX | SGX news | `SGX News` | none |
+| KLSE | Full KLSE company report | `Full company report for a KLSE-listed symbol` | `symbol` |
+| KLSE | KLSE companies by sector | `List KLSE companies filtered by sector` | `sector` |
+| KLSE | List KLSE sectors | `List all KLSE sectors` | none |
+| KLSE | Top KLSE companies by classification | `Top KLSE companies by classification` | none |
+| Mining | List/search mining companies | `List Mining Companies` | none |
+| Mining | Mining company detail | `Mining Company Detail` | `slug` |
+| Mining | Mining company financials | `Mining Company Financials` | `slug` |
+| Mining | Mining company ownership (parents/subsidiaries) | `Mining Company Ownership` | `slug` |
+| Mining | Mining company production performance | `Mining Company Performance` | `slug` |
+| Mining | Commodity price history | `Commodity Price History` | `commodity_name` |
+| Mining | Mining company sales destinations | `Company Sales Destinations` | `slug` |
+| Mining | Global commodity data by country | `Global Commodity Data` | none |
+| Mining | List commodities | `List Commodities` | none |
+| Mining | Top export destinations | `Top Export Destinations` | `commodity_type`, `year` |
+| Mining | Mining site detail | `Mining Site Detail` | `slug` |
+| Mining | Mining sites (list/filter) | `Mining Sites` | none |
+| Mining | Resources & reserves by province | `Resources & Reserves Detail` | `province` |
+| Mining | National resources & reserves index | `Resources & Reserves Index` | none |
+| Mining | Total national commodity production | `Total Commodity Production` | `commodity_type` |
+| Mining | Mining contracts (owner/contractor) | `Mining Contracts` | none |
+| Mining | Mining license auction detail | `Mining License Auction Detail` | `wiup_code` |
+| Mining | Mining license auctions (list/filter) | `Mining License Auctions` | none |
+| Mining | Mining licenses (list/filter) | `Mining Licenses` | none |
+<!-- GENERATED:decision-table:end -->
 
-| User wants | Endpoint | Required params |
-|---|---|---|
-| List all subsectors | `GET /subsectors/` | none |
-| List all industries | `GET /industries/` | none |
-| List all subindustries | `GET /subindustries/` | none |
-| SGX sector list | `GET /sgx/sectors/` | none |
+## Getting exact parameters
 
-### Company discovery
-
-| User wants | Endpoint | Required params |
-|---|---|---|
-| Companies in a subsector | `GET /companies/?sub_sector={sub_sector}` | `sub_sector` |
-| Companies in a subindustry | `GET /companies/?sub_industry={sub_industry}` | `sub_industry` |
-| Companies in a stock index | `GET /index/{index}/` | `index` |
-| Companies with segment data | `GET /companies/list_companies_with_segments/` | none |
-| SGX companies by sector | `GET /sgx/companies/?sector={sector}` | `sector` |
-
-### Company details
-
-| User wants | Endpoint | Required params |
-|---|---|---|
-| Full company report (IDX) | `GET /company/report/{ticker}/` | `ticker` |
-| SGX company report | `GET /sgx/company/report/{ticker}` | `ticker` |
-| Listing performance | `GET /listing-performance/{ticker}/` | `ticker` |
-| Quarterly financial dates | `GET /company/get_quarterly_financial_dates/{ticker}/` | `ticker` |
-| Quarterly financials | `GET /financials/quarterly/{ticker}/` | `ticker` |
-| Company segments | `GET /company/get-segments/{ticker}/` | `ticker` |
-
-### Market data
-
-| User wants | Endpoint | Required params |
-|---|---|---|
-| Daily stock price | `GET /daily/{ticker}` | `ticker` |
-| Index daily data | `GET /index-daily/{index_code}/` | `index_code` |
-| Index summary | `GET /index/{index}/` | `index` |
-| IDX total market cap | `GET /idx-total/` | none |
-
-### Rankings and screening
-
-| User wants | Endpoint | Required params |
-|---|---|---|
-| Top gainers/losers | `GET /companies/top-changes/` | none (all optional) |
-| Top companies by metric | `GET /companies/top/` | none (all optional) |
-| Top growth companies | `GET /companies/top-growth/` | none (all optional) |
-| Most traded stocks | `GET /most-traded/` | none (all optional) |
-| SGX top companies | `GET /sgx/companies/top/` | none (all optional) |
-
-For full parameter lists and response schemas, see:
-- `${CLAUDE_PLUGIN_ROOT}/references/idx-endpoints.md` -- all 18 IDX endpoints
-- `${CLAUDE_PLUGIN_ROOT}/references/sgx-endpoints.md` -- all 6 SGX endpoints
-- `${CLAUDE_PLUGIN_ROOT}/assets/endpoint-map.md` -- quick-lookup table
-
-## Common patterns
-
-### Fetch a company report
-
-```python
-import os
-import requests
-
-API_KEY = os.environ["SECTORS_API_KEY"]
-BASE_URL = "https://api.sectors.app/v1"
-headers = {"Authorization": API_KEY}
-
-ticker = "BBCA"
-params = {"sections": "overview,valuation,financials"}
-resp = requests.get(f"{BASE_URL}/company/report/{ticker}/", headers=headers, params=params)
-report = resp.json()
-
-print(report["company_name"])
-print(report["overview"]["market_cap"])
-```
-
-Available sections: `overview`, `valuation`, `future`, `peers`, `financials`, `dividend`, `management`, `ownership`. Use `all` or omit for everything.
-
-### Get daily stock prices in a date range
-
-```python
-import os
-import requests
-
-API_KEY = os.environ["SECTORS_API_KEY"]
-BASE_URL = "https://api.sectors.app/v1"
-headers = {"Authorization": API_KEY}
-
-ticker = "BBRI.JK"
-# Normalize: uppercase, strip .JK
-clean = ticker.upper().replace(".JK", "")
-
-params = {"start": "2025-01-01", "end": "2025-01-31"}
-resp = requests.get(f"{BASE_URL}/daily/{clean}", headers=headers, params=params)
-prices = resp.json()
-
-for day in prices:
-    print(day["date"], day["close"], day["volume"])
-```
-
-### Find top gainers and losers
-
-```python
-import os
-import requests
-
-API_KEY = os.environ["SECTORS_API_KEY"]
-BASE_URL = "https://api.sectors.app/v1"
-headers = {"Authorization": API_KEY}
-
-params = {
-    "classifications": "top_gainers,top_losers",
-    "periods": "7d,30d",
-    "n_stock": 5,
-    "min_mcap_billion": 5000,
-}
-resp = requests.get(f"{BASE_URL}/companies/top-changes/", headers=headers, params=params)
-movers = resp.json()
-
-for stock in movers["top_gainers"]["7d"]:
-    print(stock["symbol"], stock["price_change"])
-```
-
-### List companies in an index
-
-```python
-import os
-import requests
-
-API_KEY = os.environ["SECTORS_API_KEY"]
-BASE_URL = "https://api.sectors.app/v1"
-headers = {"Authorization": API_KEY}
-
-# Available: lq45, idx30, kompas100, jii70, idxhidiv20, srikehati, etc.
-resp = requests.get(f"{BASE_URL}/index/lq45/", headers=headers)
-companies = resp.json()
-
-for c in companies:
-    print(c["symbol"], c["company_name"])
-```
-
-### SGX company report
-
-```python
-import os
-import requests
-
-API_KEY = os.environ["SECTORS_API_KEY"]
-BASE_URL = "https://api.sectors.app/v1"
-headers = {"Authorization": API_KEY}
-
-ticker = "D05"  # DBS Group
-resp = requests.get(f"{BASE_URL}/sgx/company/report/{ticker}", headers=headers)
-report = resp.json()
-
-print(report["name"])
-print(report["valuation"]["pe"])
-print(report["financials"]["gross_margin"])
-```
+1. Search the matching reference file for the line containing `"key": "<endpoint-key>"`:
+   - IDX -> `references/idx-endpoints.jsonl`
+   - SGX -> `references/sgx-endpoints.jsonl`
+   - KLSE -> `references/klse-endpoints.jsonl`
+   - Mining -> `references/mining-endpoints.jsonl`
+2. That line is one complete JSON object — the full spec (path, params with types/defaults/enums, response shape).
+3. Do not guess params from memory. If the key isn't in the decision table, the endpoint doesn't exist.
 
 ## Ticker normalization
 
@@ -240,61 +146,19 @@ print(report["financials"]["gross_margin"])
 |---|---|---|
 | IDX | Uppercase, strip `.JK` suffix | `bbca.jk` -> `BBCA` |
 | SGX | Uppercase, strip `.SI` suffix | `d05.si` -> `D05` |
+| KLSE | Numeric 4-digit code, no suffix | `1155` |
 
 Always normalize before passing to an endpoint.
 
 ## Gotchas
 
-1. **Auth header format**: Use `Authorization: <raw_key>`. NOT `Bearer <key>`. NOT `Authorization: Bearer <key>`.
-
-2. **Date format**: Always `YYYY-MM-DD`. Example: `2025-06-15`.
-
-3. **Date range limit**: The `/most-traded/` endpoint requires start and end dates within 90 days of each other.
-
-4. **Kebab-case for subsectors and sectors**: Use `banks`, `financing-service`, `consumer-defensive`. Not camelCase or snake_case.
-
-5. **Nested response structure**: Ranking endpoints (`top-changes`, `top`, `top-growth`) return objects keyed by classification, then by period. Always navigate both levels.
-
-   ```python
-   # top-changes returns: { "top_gainers": { "7d": [...], "30d": [...] } }
-   # top returns: { "dividend_yield": [...], "revenue": [...] }
-   ```
-
-6. **Market cap units**: IDX values are in billion IDR (`min_mcap_billion`). SGX values are in million SGD (`min_mcap_million`).
-
-7. **Default values matter**: Many optional params default to `"all"` or specific values (e.g. `n_stock` defaults to 5, `min_mcap_billion` defaults to 5000). Be explicit when you need different behavior.
-
-8. **Index codes**: IDX index daily data uses lowercase codes: `ihsg`, `lq45`, `idx30`. Company-by-index uses the same codes.
-
-9. **Quarterly financials `approx` flag**: When `approx=true`, the API returns the closest available quarter if an exact match for `report_date` is not found.
-
-10. **Company report sections param**: Only appended to the URL when not `"all"`. If you want all sections, omit the `sections` parameter entirely.
-
-## Available IDX indices
-
-`ftse`, `idx30`, `idxbumn20`, `idxesgl`, `idxg30`, `idxhidiv20`, `idxq30`, `idxv30`, `jii70`, `kompas100`, `lq45`, `sminfra18`, `srikehati`, `economic30`, `idxvesta28`
-
-## Top companies classifications
-
-**IDX** (`/companies/top/`): `dividend_yield`, `total_dividend`, `revenue`, `earnings`, `market_cap`, `pb`, `pe`, `ps`
-
-**IDX growth** (`/companies/top-growth/`): `top_earnings_growth_gainers`, `top_earnings_growth_losers`, `top_revenue_growth_gainers`, `top_revenue_growth_losers`
-
-**IDX movers** (`/companies/top-changes/`): `top_gainers`, `top_losers`
-
-**SGX** (`/sgx/companies/top/`): `dividend_yield`, `revenue`, `earnings`, `market_cap`, `pe`
-
-## Error handling
-
-Always check the response status:
-
-```python
-resp = requests.get(url, headers=headers)
-if resp.status_code == 403:
-    raise ValueError("Invalid or missing API key. Ensure SECTORS_API_KEY is set correctly.")
-if resp.status_code == 404:
-    raise ValueError(f"Resource not found: {url}")
-if not resp.ok:
-    raise RuntimeError(f"API error {resp.status_code}: {resp.text}")
-data = resp.json()
-```
+1. **Auth**: `Authorization: <raw_key>`. Never `Bearer`.
+2. **Dates**: always `YYYY-MM-DD`.
+3. **90-day cap**: time-series endpoints (`Daily Transaction Data`, `Most Traded Stocks`, `Index Daily Transaction Data`, `IDX Market Summary`, `SGX Daily Price Data`, `Broker Activity By Code`, `Daily Net Foreign Inflow`, etc.) silently clamp wider ranges to the most recent 90 days ending at `end`. A future `end` returns 400.
+4. **Kebab-case** for sector/subsector values: `banks`, `consumer-defensive` — not camelCase/snake_case.
+5. **Nested responses**: ranking endpoints (`Top Company Movers`, `Most Traded Stocks`, `Top SGX companies by classification`, `Top KLSE companies by classification`) key results by classification/date, sometimes by period too, e.g. `data["top_gainers"]["7d"]`, `data["2025-01-15"]`. Always navigate every level.
+6. **Market cap units differ**: IDX is billion IDR (`min_mcap_billion`); SGX/KLSE is million SGD/MYR (`min_mcap_million`).
+7. **`Company Report`'s `sections` param**: comma-separated; omit for all sections (costs 1 credit/section — 8 for IDX, 4 for SGX/KLSE). Valid values are in that endpoint's `references/idx-endpoints.jsonl` entry.
+8. **`Company Quarterly Financials`' `approx`**: defaults to `true` (nearest quarter if `report_date` has no exact match). Set `false` to require an exact match.
+9. **Screener query modes are mutually exclusive**: `q` (natural language, 3 credits) overrides `where`/`order_by`/`limit`/`offset` (structured, 1 credit) when present.
+10. **Mining endpoints key on `slug`, not ticker**: discover slugs via `List Mining Companies` or `Mining Sites` first.

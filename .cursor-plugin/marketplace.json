@@ -1,0 +1,17 @@
+{
+  "name": "sectors-agent-skills",
+  "owner": {
+    "name": "Supertype AI"
+  },
+  "metadata": {
+    "description": "Cursor plugin marketplace for the Sectors API skill",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "sectors-api",
+      "source": ".",
+      "description": "Query financial market data from the Sectors API (api.sectors.app) for IDX and SGX markets. Covers stock prices, company reports, financials, market indices, top movers, dividends, earnings, and more."
+    }
+  ]
+}

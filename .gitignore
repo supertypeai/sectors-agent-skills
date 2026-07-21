@@ -21,12 +21,14 @@ __pycache__/
 *~
 .DS_Store
 
-# Build output
-dist/
+# Build output (native, unrelated to the dist/ skill bundle which IS committed)
 build/
 *.o
 *.so
 *.dylib
+
+# Fetched fresh by sync.sh, never hand-edited or shipped
+src/schema/
 
 # Logs
 logs/

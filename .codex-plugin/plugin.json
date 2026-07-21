@@ -1,0 +1,32 @@
+{
+  "name": "sectors-api",
+  "version": "1.1.0",
+  "description": "Query financial market data from the Sectors API (api.sectors.app) for IDX (Indonesia), SGX (Singapore), and KLSE (Malaysia) markets",
+  "author": {
+    "name": "Supertype AI",
+    "url": "https://sectors.app"
+  },
+  "homepage": "https://sectors.app/api",
+  "repository": "https://github.com/supertypeai/sectors-agent-skills",
+  "license": "MIT",
+  "keywords": ["finance", "stocks", "idx", "sgx", "klse", "indonesia", "singapore", "malaysia", "api"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Sectors API",
+    "shortDescription": "Indonesia (IDX), Singapore (SGX), and Malaysia (KLSE) financial data",
+    "longDescription": "Query Indonesia (IDX), Singapore (SGX), Malaysia (KLSE), and Indonesian mining sector financial data through the Sectors API. Covers stock prices, company reports, financials, market indices, top movers, dividends, earnings, and more.",
+    "developerName": "Supertype AI",
+    "category": "Finance",
+    "capabilities": ["Read"],
+    "websiteURL": "https://sectors.app",
+    "privacyPolicyURL": "https://sectors.app/privacy",
+    "termsOfServiceURL": "https://sectors.app/terms",
+    "defaultPrompt": [
+      "What is the current market cap of BBCA?",
+      "Show me the top 5 gainers on IDX this week",
+      "Get the quarterly financials for BBRI",
+      "Compare P/E ratios of banks in the IDX",
+      "What are the top dividend stocks in Singapore?"
+    ]
+  }
+}

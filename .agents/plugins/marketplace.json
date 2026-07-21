@@ -1,0 +1,20 @@
+{
+  "name": "sectors-agent-skills",
+  "interface": {
+    "displayName": "Sectors Agent Skills"
+  },
+  "plugins": [
+    {
+      "name": "sectors-api",
+      "source": {
+        "source": "local",
+        "path": "."
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Finance"
+    }
+  ]
+}

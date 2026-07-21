@@ -30,10 +30,8 @@ Visit [https://sectors.app/api](https://sectors.app/api) to obtain your API key.
 
 ### 2. Install This Skill
 
-Clone or copy this repository to your local machine:
-
 ```bash
-git clone <repository-url> sectors-agent-skills
+git clone https://github.com/supertypeai/sectors-agent-skills.git
 cd sectors-agent-skills
 ```
 
@@ -126,16 +124,16 @@ Or add it to your Claude Code configuration file (usually at `~/.config/claude/s
 
 ### Step 2: Point Claude to the Skill
 
-When starting Claude Code from this directory, it will automatically read the `SKILL.md` file. You can also explicitly reference it:
+When starting Claude Code, point it to the skill file:
 
 ```bash
-claude --skill ./SKILL.md
+claude --skill ./skills/sectors-api/SKILL.md
 ```
 
 Or within Claude Code:
 
 ```
-/claude read ./SKILL.md
+/claude read ./skills/sectors-api/SKILL.md
 ```
 
 ### Step 3: Start Chatting
@@ -173,10 +171,10 @@ opencode
 
 ### Step 2: Load the Skill
 
-OpenCode will automatically detect `SKILL.md` in the current directory. You can also manually load it:
+OpenCode will automatically detect `SKILL.md` under `skills/sectors-api/`. You can also manually load it:
 
 ```
-/load-skill ./SKILL.md
+/load-skill ./skills/sectors-api/SKILL.md
 ```
 
 ### Step 3: Start Chatting
@@ -186,6 +184,49 @@ Ask OpenCode questions about financial data:
 - "What companies are in the banking subsector?"
 - "Get the company report for D05 (DBS Group)"
 - "Show me IDX historical data for the last 30 days"
+
+---
+
+## Codex CLI Integration
+
+### Step 1: Add the Plugin Marketplace
+
+```bash
+codex plugin marketplace add supertypeai/sectors-agent-skills
+```
+
+### Step 2: Set the API Key
+
+Codex strips env vars containing `KEY`, `SECRET`, or `TOKEN` by default, so use the explicit policy:
+
+In `~/.codex/config.toml`:
+
+```toml
+[shell_environment_policy.set]
+SECTORS_API_KEY = "your-api-key-here"
+```
+
+### Step 3: Install and Use
+
+In a Codex CLI session, use the `/plugins` command to browse your marketplace sources and install the `sectors-api` plugin. Once installed, try:
+
+- "What is the current market cap of BBCA?"
+- "Show me the top 5 gainers on IDX this week"
+- "Get the quarterly financials for BBRI"
+- "Compare P/E ratios of banks in the IDX"
+- "What are the top dividend stocks in Singapore?"
+
+### Updating the Plugin
+
+```bash
+codex plugin marketplace upgrade
+```
+
+### Removing the Plugin
+
+```bash
+codex plugin marketplace remove supertypeai/sectors-agent-skills
+```
 
 ---
 
@@ -287,9 +328,9 @@ Your agent must normalize tickers before API calls:
 When a user wants to use this skill, follow these steps:
 
 1. **Verify the skill files exist**:
-   - Check that `SKILL.md` is present
+   - Check that `skills/sectors-api/SKILL.md` is present
    - Check that `scripts/check_setup.py` exists
-   - Verify `references/idx-endpoints.md` and `references/sgx-endpoints.md` exist
+   - Verify `references/idx-endpoints.jsonl` and `references/sgx-endpoints.jsonl` exist
 
 2. **Check environment setup**:
    ```python
@@ -317,18 +358,20 @@ When a user wants to use this skill, follow these steps:
 
 ```
 sectors-agent-skills/
-├── .claude-plugin/           # Plugin marketplace and manifest
-│   ├── marketplace.json      # Plugin catalog for this marketplace
-│   └── plugin.json           # Plugin manifest (version, metadata)
+├── .claude-plugin/           # Claude Code marketplace + plugin manifest
+├── .codex-plugin/            # Codex plugin manifest
+├── .cursor-plugin/           # Cursor marketplace + plugin manifest
+├── .agy/                     # Antigravity CLI compat entry point (symlinks)
+├── .agents/plugins/          # Codex marketplace manifest
+├── plugin.json               # Antigravity CLI plugin manifest
 ├── skills/
 │   └── sectors-api/
-│       └── SKILL.md          # Plugin skill definition
-├── SKILL.md                  # Standalone skill definition (backward compat)
-├── assets/
-│   └── endpoint-map.md       # Quick reference table
+│       └── SKILL.md          # Skill definition (single source of truth)
 ├── references/
-│   ├── idx-endpoints.md      # Detailed IDX docs (19 endpoints)
-│   └── sgx-endpoints.md      # Detailed SGX docs (6 endpoints)
+│   ├── idx-endpoints.jsonl   # IDX endpoint specs
+│   ├── sgx-endpoints.jsonl   # SGX endpoint specs
+│   ├── klse-endpoints.jsonl  # KLSE endpoint specs
+│   └── mining-endpoints.jsonl # Mining endpoint specs
 ├── scripts/
 │   └── check_setup.py        # Setup verification
 ├── DOCS.md                   # This file
@@ -631,3 +674,54 @@ pip install requests
 **Agent Response:** "On January 1, 2025, BBCA closed at Rp 9,250 with a volume of 12.5 million shares."
 
 **Ready to start?** Set your API key and ask your AI agent about financial data!
+
+---
+
+## Development
+
+### Schema Updates
+
+```bash
+# Fetch latest schema, regenerate references/decision table, validate — one command:
+bash src/sync.sh
+
+# Commit the result:
+git add -A && git commit -m "sync: regenerate from updated schema"
+```
+
+CI runs `src/sync.sh` and fails on any drift.
+
+### Project Structure
+
+```
+.
+├── .claude-plugin/           # Claude Code marketplace + plugin manifest
+├── .codex-plugin/            # Codex plugin manifest
+├── .agents/plugins/          # Codex marketplace manifest
+├── .cursor-plugin/           # Cursor marketplace + plugin manifest
+├── .agy/                     # Antigravity CLI compat entry point (symlinks)
+├── plugin.json               # Antigravity CLI plugin manifest
+├── skills/sectors-api/       # Skill definition (single source of truth)
+│   └── SKILL.md
+├── references/                # Endpoint specs, regenerated from schema
+├── scripts/
+│   └── check_setup.py        # Setup verification
+├── src/
+│   ├── sync.sh               # Regenerates references/ + SKILL.md decision table
+│   ├── schema/                # Fetched fresh (gitignored)
+│   └── scripts/
+│       ├── data/              # Generator inputs (intent map, overrides)
+│       └── pipeline/          # sync.sh pipeline scripts
+├── .github/workflows/ci.yml  # Drift check
+├── .env.example               # Dev template
+├── DOCS.md                    # This file
+├── README.md                  # User quickstart
+└── .gitignore
+```
+
+### Requirements (Development)
+
+- Python 3.8+
+- `requests` library
+- Network access to fetch the OpenAPI schema
+- `SCHEMA_SOURCE_URL` env var (optional, defaults to `supertypeai/sectors_api_docs` main branch)

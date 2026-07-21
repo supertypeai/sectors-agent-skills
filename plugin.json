@@ -1,0 +1,5 @@
+{
+  "name": "sectors-api",
+  "version": "1.1.0",
+  "description": "Query financial market data from the Sectors API (api.sectors.app) for IDX (Indonesia), SGX (Singapore), and KLSE (Malaysia) markets"
+}
