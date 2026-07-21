@@ -1,163 +1,112 @@
-# Sectors Agent Skills
+# Sectors API Agent Skill
 
-A set of skills and utilities for building agents that interact with financial market data from the Sectors API, supporting both Indonesia Stock Exchange (IDX) and Singapore Exchange (SGX).
+Query Indonesia (IDX), Singapore (SGX), Malaysia (KLSE), and Indonesian mining sector financial data through the [Sectors API](https://sectors.app/api).
 
-This repository serves as both a **Claude Code plugin marketplace** and a standalone agent skill.
+## Get an API Key
 
-## Overview
+Get your free API key at **[https://sectors.app/api](https://sectors.app/api)**.
 
-This repository provides tools and documentation to integrate with the Sectors API, which offers comprehensive financial data including:
-- **IDX (Indonesia Stock Exchange)**: Company information, financial metrics, indices, and market data
-- **SGX (Singapore Exchange)**: Company information, sectors, and market data
+## Install & Configure
 
-## Getting Started
-
-### Option A: Install as a Claude Code Plugin (Recommended)
-
-The easiest way to use this skill is to install it as a Claude Code plugin:
+### Claude Code (Recommended)
 
 ```bash
+claude plugin marketplace add supertypeai/sectors-agent-skills
 claude plugin install sectors-api@sectors-agent-skills
 ```
 
-Then set your API key:
+Then set your API key in `~/.claude/settings.json`:
+
+```json
+{ "env": { "SECTORS_API_KEY": "your-api-key-here" } }
+```
+
+Done. The `sectors-api` skill is available in all Claude Code sessions.
+
+### Codex CLI
 
 ```bash
-claude config set env SECTORS_API_KEY your-api-key-here
+codex plugin marketplace add supertypeai/sectors-agent-skills
 ```
 
-That's it. The `sectors-api` skill will be available in all your Claude Code sessions.
+Then in a Codex CLI session, run `/plugins` to browse your marketplace sources and install the `sectors-api` plugin.
 
-### Option B: Use as a Standalone Skill
+Add to `~/.codex/config.toml`:
 
-If you prefer to use the repository directly (or use a non-Claude Code agent), follow the steps below.
+```toml
+[shell_environment_policy.set]
+SECTORS_API_KEY = "your-api-key-here"
+```
 
-### 1. Get an API Key
+> ⚠️ Codex strips env vars containing `KEY`, `SECRET`, or `TOKEN` by default.
+> `shell_environment_policy.set` injects after that filter — the reliable way.
 
-Get your API key from: https://sectors.app/api
-
-### 2. Set Up Environment
-
-Create a `.env` file in the root directory with your API key:
+**Alternative — manual symlink:**
 
 ```bash
-cp .env.example .env
+git clone https://github.com/supertypeai/sectors-agent-skills.git
+mkdir -p .agents/skills
+ln -s /path/to/sectors-agent-skills/skills/sectors-api .agents/skills/sectors-api
 ```
 
-Then edit `.env` and add your API key:
+### Cursor
 
-```
-SECTORS_API_KEY=your-api-key-here
+In Cursor Agent chat, install from the plugin marketplace:
+
+```text
+/add-plugin sectors-api
 ```
 
-Alternatively, export it in your terminal:
+Or add the marketplace directly:
+
+```bash
+git clone https://github.com/supertypeai/sectors-agent-skills.git
+```
+
+then point Cursor's plugin marketplace at the local checkout (or the repo URL once published), and install `sectors-api`. Set your API key via `~/.zshrc`/`~/.bashrc`:
 
 ```bash
 export SECTORS_API_KEY="your-api-key-here"
 ```
 
-Or add it to your shell profile:
+### Antigravity CLI (`agy`)
 
 ```bash
-echo 'export SECTORS_API_KEY="your-api-key-here"' >> ~/.bashrc
-# or for zsh:
-echo 'export SECTORS_API_KEY="your-api-key-here"' >> ~/.zshrc
+agy plugin install https://github.com/supertypeai/sectors-agent-skills
 ```
 
-### 3. Verify Setup
-
-Run the setup verification script to ensure your configuration is correct:
+Verify with `agy plugin list`. For a local checkout:
 
 ```bash
-python scripts/check_setup.py
+git clone https://github.com/supertypeai/sectors-agent-skills.git
+agy plugin install ./sectors-agent-skills
 ```
 
-This script will:
-- Check that `SECTORS_API_KEY` is set
-- Verify the requests library is installed
-- Test connectivity to the API
-- Validate your API key
+Add to your shell profile (`~/.zshrc`, `~/.bashrc`):
 
-## API Documentation
+```bash
+export SECTORS_API_KEY="your-api-key-here"
+```
 
-### Endpoint Reference
+## What You Can Ask
 
-See [assets/endpoint-map.md](assets/endpoint-map.md) for a complete list of available API endpoints with parameter descriptions.
+After install, try queries like:
 
-### Supported Exchanges
+- "What is the current market cap of BBCA?"
+- "Show me the top 5 gainers on IDX this week"
+- "Get the quarterly financials for BBRI"
+- "Compare P/E ratios of banks in the IDX"
+- "What are the top dividend stocks in Singapore?"
+- "List mining companies in Indonesia with their production data"
+- "Show me the KLSE company report for 1155"
 
-- **IDX Endpoints**: See [references/idx-endpoints.md](references/idx-endpoints.md)
-- **SGX Endpoints**: See [references/sgx-endpoints.md](references/sgx-endpoints.md)
-
-### Parameter Conventions
-
-| Convention | Rule |
-|---|---|
-| Dates | `YYYY-MM-DD` format |
-| Tickers (IDX) | Uppercase, no `.JK` suffix |
-| Tickers (SGX) | Uppercase, no `.SI` suffix |
-| Subsectors / sectors | kebab-case (e.g. `banks`, `consumer-defensive`) |
-| Multiple values | Comma-separated string |
-| Market cap (IDX) | Billion IDR |
-| Market cap (SGX) | Million SGD |
-| Auth header | `Authorization: <raw_api_key>` (no Bearer prefix) |
-
-## Key Features
-
-- **Subsectors & Industries**: Get classification data for both exchanges
-- **Company Data**: Query companies by sector, subsector, or index
-- **Financial Data**: Access quarterly financials, company reports, and segments
-- **Market Analytics**: Top movers, most traded, top growth companies
-- **Index Data**: Historical index data and total market cap metrics
-- **Daily Transactions**: Historical trading data by ticker
+For the full endpoint list, ask your agent to check `SKILL.md`'s decision table.
 
 ## Requirements
 
-- Python 3.8 or higher
-- `requests` library (`pip install requests`)
+- Python 3.8+ with `requests` (`pip install requests`)
+- Network access to `https://api.sectors.app`
 
-## Environment Variables
+## Detailed Docs
 
-- `SECTORS_API_KEY`: Your Sectors API authentication key (required)
-
-## Project Structure
-
-```
-.
-├── .claude-plugin/          # Plugin marketplace and manifest
-│   ├── marketplace.json     # Plugin catalog for this marketplace
-│   └── plugin.json          # Plugin manifest (version, metadata)
-├── skills/
-│   └── sectors-api/
-│       └── SKILL.md         # Plugin skill definition
-├── SKILL.md                 # Standalone skill definition (backward compat)
-├── assets/                  # Quick reference guides
-│   └── endpoint-map.md      # All endpoints at a glance
-├── references/              # Detailed endpoint documentation
-│   ├── idx-endpoints.md     # Indonesia Stock Exchange endpoints
-│   └── sgx-endpoints.md     # Singapore Exchange endpoints
-├── scripts/                 # Utility scripts
-│   └── check_setup.py       # Setup verification script
-├── .env.example             # Environment variables template
-├── .gitignore               # Git ignore rules
-├── DOCS.md                  # Detailed documentation
-└── README.md                # This file
-```
-
-## Security
-
-- **Never hardcode API keys** in your code
-- Always read the API key from the `SECTORS_API_KEY` environment variable
-- Use `.env.example` as a template for configuration
-- The `.env` file (containing your actual API key) is automatically excluded from version control
-
-## Support
-
-For issues, questions, or feedback:
-1. Check the endpoint reference documents in the `references/` directory
-2. Review the setup script at `scripts/check_setup.py`
-3. Ensure your API key is valid at https://sectors.app/api
-
-## License
-
-See LICENSE file for details (if applicable).
+See [DOCS.md](DOCS.md) for per-harness walkthroughs, troubleshooting, example conversations, and developer reference.
